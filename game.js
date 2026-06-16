@@ -38,6 +38,8 @@ let pipes = [];
 let particles = [];
 let clouds = [];
 let customImage = null;
+const defaultBirdImage = new Image();
+defaultBirdImage.src = 'bird.png';
 let cropperInstance = null;
 let current_player_name = "Player";
 let frameCount = 0;
@@ -261,6 +263,11 @@ const bird = {
             ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
             ctx.clip();
             ctx.drawImage(customImage, -this.radius, -this.radius, this.radius * 2, this.radius * 2);
+        } else if (defaultBirdImage && defaultBirdImage.complete && defaultBirdImage.width > 0) {
+            ctx.beginPath();
+            ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+            ctx.clip();
+            ctx.drawImage(defaultBirdImage, -this.radius, -this.radius, this.radius * 2, this.radius * 2);
         } else {
             ctx.beginPath();
             ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
@@ -450,6 +457,18 @@ function startGame() {
         current_player_name = "Player-" + randomId;
         playerNameInput.value = current_player_name; 
     }
+
+    // Memicu Mode Full Screen otomatis pada pembungkus game area saat dimainkan
+    const gameArea = document.querySelector('.game-area');
+    if (gameArea) {
+        if (gameArea.requestFullscreen) {
+            gameArea.requestFullscreen().catch(err => console.log("Fullscreen ditolak:", err.message));
+        } else if (gameArea.webkitRequestFullscreen) {
+            gameArea.webkitRequestFullscreen();
+        } else if (gameArea.msRequestFullscreen) {
+            gameArea.msRequestFullscreen();
+        }
+    }
     
     canvas.focus(); 
     
@@ -607,7 +626,14 @@ window.addEventListener('keydown', (e) => {
 });
 
 canvas.addEventListener('click', () => { if (gameRunning) bird.jump(); });
-canvas.addEventListener('touchstart', (e) => { e.preventDefault(); if (gameRunning) bird.jump(); });
+// Handler sentuhan smartphone yang bersahabat dengan fitur scroll layar luar canvas
+canvas.addEventListener('touchstart', (e) => {
+    if (gameRunning) {
+        if (e.touches.length === 1) {
+            bird.jump();
+        }
+    }
+}, { passive: true });
 startBtn.addEventListener('click', (e) => { e.stopPropagation(); startGame(); });
 
 // =========================================================
