@@ -11,7 +11,7 @@ body {
     align-items: center;
     justify-content: center;
     min-height: 100vh;
-    overflow: hidden;
+    overflow-y: auto; 
     color: #0f172a;
 }
 
@@ -29,6 +29,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
+    position: relative;
 }
 
 h1 {
@@ -40,25 +41,25 @@ h1 {
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
-    text-shadow: 0 4px 12px rgba(2, 132, 199, 0.15);
+    text-shadow: 0 4px 12px rgba(2, 132, 199, 0.08);
 }
 
 .game-container {
     position: relative;
-    box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+    box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.12);
     border-radius: 24px;
     overflow: hidden;
     border: 6px solid #ffffff;
     width: 400px;
     height: 550px;
+    background: #bae6fd;
 }
 
 canvas {
     display: block;
     width: 100%;
     height: 100%;
-    outline: none; /* Hilangkan garis kotak focus browser */
-    background: linear-gradient(to bottom, #bae6fd, #f0f9ff);
+    outline: none;
 }
 
 #ui-overlay {
@@ -74,7 +75,7 @@ canvas {
     background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    transition: opacity 0.2s ease;
+    transition: opacity 0.3s ease, visibility 0.3s;
     z-index: 5;
     padding: 20px;
 }
@@ -82,36 +83,37 @@ canvas {
 #overlay-title {
     font-size: 2.2rem;
     font-weight: 900;
-    color: #0369a1;
-    margin-bottom: 15px;
+    color: #1e293b;
+    margin-bottom: 20px;
     letter-spacing: 1px;
     text-align: center;
 }
 
 #player-name {
-    padding: 12px 18px;
+    padding: 12px 16px;
     border-radius: 12px;
-    border: 2px solid #cbd5e1;
+    border: 2px solid #e2e8f0;
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 700;
     text-align: center;
     width: 240px;
     outline: none;
     transition: border-color 0.2s, box-shadow 0.2s;
     color: #334155;
-    background: #ffffff;
-    margin-bottom: 15px;
+    background: #f8fafc;
+    margin-bottom: 12px;
 }
 
 #player-name:focus {
     border-color: #0284c7;
+    background: #ffffff;
     box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.15);
 }
 
 .upload-container {
-    margin-bottom: 25px;
+    margin-bottom: 20px;
     width: 100%;
-    max-width: 260px;
+    max-width: 240px;
     text-align: center;
 }
 
@@ -122,25 +124,25 @@ canvas {
     padding: 14px;
     background: #f0f9ff;
     border: 2px dashed #0284c7;
-    border-radius: 14px;
+    border-radius: 16px;
     cursor: pointer;
     transition: background 0.2s, transform 0.2s;
 }
 
 .upload-label:hover {
     background: #e0f2fe;
-    transform: scale(1.02);
+    transform: translateY(-1px);
 }
 
 .upload-icon {
-    font-size: 26px;
-    margin-bottom: 5px;
+    font-size: 24px;
+    margin-bottom: 4px;
 }
 
 .upload-text {
     font-size: 13px;
-    font-weight: 600;
-    color: #0369a1;
+    font-weight: 700;
+    color: #0284c7;
 }
 
 #char-upload {
@@ -151,11 +153,11 @@ canvas {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     background: #fff;
-    padding: 12px;
-    border-radius: 14px;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+    padding: 10px;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
 #char-preview {
@@ -163,6 +165,7 @@ canvas {
     height: 50px;
     object-fit: cover;
     border-radius: 50%;
+    border: 2px solid #0284c7;
 }
 
 #reset-char-btn {
@@ -176,42 +179,72 @@ canvas {
 }
 
 .btn-start {
-    padding: 14px 44px;
-    font-size: 18px;
+    padding: 14px 40px;
+    font-size: 16px;
     font-weight: 800;
     color: #fff;
     background: linear-gradient(45deg, #0284c7, #10b981);
     border: none;
-    border-radius: 50px;
+    border-radius: 12px;
     cursor: pointer;
-    box-shadow: 0 10px 25px -5px rgba(2, 132, 199, 0.4);
+    box-shadow: 0 10px 20px -10px rgba(2, 132, 199, 0.5);
     transition: transform 0.2s, box-shadow 0.2s;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
 }
 
 .btn-start:hover {
-    transform: scale(1.04);
-    box-shadow: 0 15px 30px -5px rgba(2, 132, 199, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 15px 25px -10px rgba(2, 132, 199, 0.6);
 }
 
+/* =========================================================
+   🌟 VISUAL SKOR BARU: LEBIH FUN, TEBAL, DAN INTERAKTIF
+   ========================================================= */
 #score-display {
     position: absolute;
     top: 25px;
-    font-size: 4rem;
-    font-weight: 900;
-    color: #0284c7;
-    text-shadow: 3px 3px 0px #ffffff;
+    font-size: 4.2rem; /* Ukuran sedikit diperbesar agar lebih mencolok */
+    font-weight: 950;
+    color: #ffffff; /* Mengubah warna teks menjadi putih murni */
     pointer-events: none;
     width: 100%;
     text-align: center;
     z-index: 2;
-    transition: transform 0.1s;
+    
+    /* Efek Stroke Hitam Tebal ala Game Arcade + Bayangan Lembut di Belakang */
+    text-shadow: 
+        -3px -3px 0 #3bd8ff,  
+         3px -3px 0 #3bd8ff,
+        -3px  3px 0 #3bd8ff,
+         3px  3px 0 #3bd8ff,
+         0px  6px 12px rgba(0, 0, 0, 0.25);
+         
+    transition: transform 0.08s ease-out; /* Memicu transisi balik yang halus */
+}
+
+/* Animasi Ketukan Membal Saat Skor Bertambah */
+.score-pop {
+    animation: scoreBounce 0.18s ease-out;
+}
+
+@keyframes scoreBounce {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.3) rotate(-3deg); /* Membesar + Sedikit miring agar fun */
+        color: #fde047; /* Berubah warna kuning cerah sesaat saat pop */
+    }
+    100% {
+        transform: scale(1) rotate(0deg);
+        color: #ffffff;
+    }
 }
 
 .instructions {
     margin-top: 15px;
-    font-size: 13px;
+    font-size: 12px;
     color: #64748b;
     font-weight: 600;
 }
@@ -220,71 +253,70 @@ canvas {
     background: #ffffff;
     padding: 24px;
     border-radius: 24px;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05);
-    border: 4px solid #fff;
-    width: 320px; 
+    box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.05);
+    width: 290px;
     display: flex;
     flex-direction: column;
 }
 
 .leaderboard-container h2 {
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 800;
-    color: #1e293b;
-    margin-bottom: 15px;
+    color: #334155;
+    margin-bottom: 14px;
     text-align: center;
-    letter-spacing: 0.5px;
     border-bottom: 2px solid #f1f5f9;
-    padding-bottom: 12px;
+    padding-bottom: 10px;
 }
 
 #leaderboard-list li {
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 700;
     color: #475569;
-    padding: 10px 14px;
-    border-radius: 12px;
+    padding: 8px 12px;
+    border-radius: 8px;
     margin-bottom: 6px;
     display: flex;
     justify-content: space-between;
+    align-items: center;
     background: #f8fafc;
-    border: 1px solid #f1f5f9;
 }
 
 #leaderboard-list li span:first-child {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 200px; 
+    max-width: 170px;
 }
 
-#leaderboard-list li:nth-child(1) { background: #fef3c7; color: #b45309; font-weight: 700; border-color: #fde68a; } 
-#leaderboard-list li:nth-child(2) { background: #f1f5f9; color: #475569; border-color: #e2e8f0; } 
-#leaderboard-list li:nth-child(3) { background: #ffedd5; color: #c2410c; border-color: #fed7aa; } 
+#leaderboard-list li:nth-child(1) { background: #fef3c7; color: #92400e; }
+#leaderboard-list li:nth-child(2) { background: #f1f5f9; color: #334155; }
+#leaderboard-list li:nth-child(3) { background: #ffedd5; color: #9a3412; }
 
 #clear-scores-btn {
-    margin-top: 15px;
+    margin-top: 12px;
     background: none;
     border: none;
     color: #94a3b8;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 700;
     cursor: pointer;
     text-align: center;
     transition: color 0.2s;
 }
+
 #clear-scores-btn:hover {
     color: #ef4444;
 }
 
-/* Modal Struktur Utama */
+/* Custom Modal */
 .modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(15, 23, 42, 0.6);
+    background: rgba(15, 23, 42, 0.3);
     backdrop-filter: blur(8px);
     display: flex;
     align-items: center;
@@ -292,7 +324,7 @@ canvas {
     z-index: 100;
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
+    transition: opacity 0.3s, visibility 0.3s;
 }
 
 .modal-overlay.active {
@@ -303,30 +335,25 @@ canvas {
 .modal-content {
     background: #ffffff;
     padding: 24px;
-    border-radius: 24px;
-    max-width: 450px;
+    border-radius: 20px;
+    max-width: 400px;
     width: 90%;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
     text-align: center;
     position: relative;
 }
 
 .crop-area {
-    max-height: 320px;
+    max-height: 260px;
     background: #f8fafc;
     border-radius: 12px;
     overflow: hidden;
-    margin-bottom: 20px;
-}
-
-.crop-area img {
-    max-width: 100%;
-    display: block;
+    margin-bottom: 16px;
 }
 
 .modal-actions {
     display: flex;
-    gap: 12px;
+    gap: 10px;
     justify-content: flex-end;
 }
 
@@ -338,21 +365,20 @@ canvas {
     border-radius: 10px;
     font-weight: 700;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13.5px;
 }
 
 .btn-secondary {
-    background: #e2e8f0;
+    background: #f1f5f9;
     color: #475569;
     border: none;
     padding: 10px 20px;
     border-radius: 10px;
     font-weight: 700;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13.5px;
 }
 
-/* GAYA DESAIN ELEGAN UNTUK POP-UP CUSTOM MODAL ADMIN */
 .admin-modal-box {
     max-width: 360px;
     padding: 32px 24px 24px 24px;
@@ -423,34 +449,30 @@ canvas {
     border-radius: 12px;
 }
 
-@media (max-width: 740px) {
-    .main-layout {
-        flex-direction: column;
-        align-items: center;
-    }
-    .leaderboard-container {
-        width: 400px;
-        max-width: 100%;
-    }
+/* TOMBOL KELUAR FULLSCREEN ANDROID */
+#exit-fullscreen-btn {
+    margin-top: 15px;
+    padding: 12px 24px;
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    transition: all 0.2s;
+    z-index: 999;
 }
 
-/* =========================================================
-   STYLE TAMBAHAN SAAT LAYAR PENUH (AUTO FULLSCREEN)
-   ========================================================= */
+#exit-fullscreen-btn:hover {
+    background: #dc2626;
+    transform: translateY(-2px);
+}
+
+/* FULLSCREEN ANDROID STYLING */
 .game-area:fullscreen {
-    background-color: #f7fee7; /* Jaga agar background tetap hijau pastel lembut */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 100vw;
-    height: 100vh;
-    padding: 10px;
-}
-
-/* Dukungan untuk iOS Safari / Webkit */
-.game-area:-webkit-full-screen {
-    background-color: #f7fee7;
+    background-color: #f0fdf4 !important;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -458,11 +480,56 @@ canvas {
     width: 100vw;
     height: 100vh;
 }
-
-/* Menyembunyikan Judul Utama saat Fullscreen di HP agar area Canvas maksimal */
 .game-area:fullscreen h1 {
     display: none;
 }
-.game-area:-webkit-full-screen h1 {
-    display: none;
+:fullscreen #exit-fullscreen-btn {
+    display: block !important;
+    position: absolute;
+    bottom: 20px;
+}
+
+/* =========================================================
+   🌟 RESPONSIVE SMARTPHONE & FORMAT BLOK INFO KOTA (REVISI)
+   ========================================================= */
+.player-info-block {
+    display: flex;
+    flex-direction: column;
+    max-width: 170px;
+}
+
+.player-city-text {
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 2px;
+}
+
+@media (max-width: 740px) {
+    body {
+        overflow-y: auto !important; /* Membuka kunci scroll mobile HP */
+        padding: 15px 10px;
+        min-height: auto;
+        display: block;
+    }
+
+    .main-layout {
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+        padding: 0;
+        overflow-y: visible;
+    }
+
+    .game-container {
+        width: 360px;
+        height: 495px;
+    }
+
+    .leaderboard-container {
+        width: 360px;
+        max-width: 100%;
+        margin-top: 10px;
+        margin-bottom: 40px; 
+    }
 }
