@@ -22,6 +22,7 @@ const adminModal = document.getElementById('admin-modal');
 const adminCloseCross = document.getElementById('admin-close-cross');
 const adminOkBtn = document.getElementById('admin-ok-btn');
 const adminPasswordInput = document.getElementById('admin-password-input');
+const exitFullscreenBtn = document.getElementById('exit-fullscreen-btn');
 
 // Optimasi Retina Display / HDPI Anti-Blur
 const dpr = window.devicePixelRatio || 1;
@@ -66,13 +67,12 @@ const firebaseConfig = {
 let useOnlineDatabase = false;
 let db;
 
-// Mencoba menginisialisasi Firebase secara aman
 try {
     if (typeof firebase !== 'undefined' && firebaseConfig.apiKey !== "MASUKKAN_API_KEY_ANDA") {
         firebase.initializeApp(firebaseConfig);
         db = firebase.firestore();
         useOnlineDatabase = true;
-        console.log("Firebase berhasil terhubung! Menggunakan database online cloud.");
+        console.log("Firebase berhasil terhubung!");
     } else {
         console.warn("Firebase Config belum diisi atau SDK tidak termuat. Beralih ke database offline lokal.");
     }
@@ -81,12 +81,11 @@ try {
 }
 
 // =========================================================
-// SYSTEM DATABASE HYBRID: ANTI-DUPLIKAT & SKOR TERTINGGI ONLY
+// SYSTEM DATABASE HYBRID
 // =========================================================
 
 function saveScore(playerName, newScore) {
     if (newScore <= 0) return;
-
     if (useOnlineDatabase) {
         db.collection("leaderboard").add({
             name: playerName,
@@ -103,21 +102,16 @@ function saveScore(playerName, newScore) {
 
 function saveScoreOfflineStorage(playerName, newScore) {
     let scores = getOfflineScores();
-    
     const existingPlayerIndex = scores.findIndex(item => item.name.toLowerCase() === playerName.toLowerCase());
-
     if (existingPlayerIndex !== -1) {
         if (newScore > scores[existingPlayerIndex].score) {
             scores[existingPlayerIndex].score = newScore;
-            console.log(`Skor lokal untuk ${playerName} diperbarui ke yang tertinggi: ${newScore}`);
         } else {
-            console.log(`Skor baru ${newScore} lebih rendah/sama. Menggunakan skor lama.`);
             return; 
         }
     } else {
         scores.push({ name: playerName, score: newScore });
     }
-
     scores.sort((a, b) => b.score - a.score);
     scores = scores.slice(0, 10);
     localStorage.setItem('sky_flappy_hybrid_scores', JSON.stringify(scores));
@@ -139,44 +133,35 @@ function updateLeaderboardUI(dataSnapshot, isOnline) {
     if (!leaderboardList) return;
     leaderboardList.innerHTML = '';
     let count = 0;
-
     let processedScores = [];
 
     if (isOnline) {
-        // --- LOGIKA FILTER DUPLIKAT UNTUK DATABASE ONLINE FIREBASE ---
         let uniquePlayers = {};
-        
         dataSnapshot.forEach((doc) => {
             const data = doc.data();
             if (data.name) {
                 const pName = data.name.trim();
                 const pScore = data.score || 0;
-
                 if (!uniquePlayers[pName] || pScore > uniquePlayers[pName]) {
                     uniquePlayers[pName] = pScore;
                 }
             }
         });
-
         for (let name in uniquePlayers) {
             processedScores.push({ name: name, score: uniquePlayers[name] });
         }
         processedScores.sort((a, b) => b.score - a.score);
-        
     } else {
-        // --- DATA LOKAL SUDAH DISARING SAAT PROSES SAVE ---
         processedScores = dataSnapshot;
     }
 
     const topTenScores = processedScores.slice(0, 10);
-
     topTenScores.forEach((item) => {
         count++;
         const li = document.createElement('li');
         li.innerHTML = `<span title="${item.name}">#${count} ${item.name}</span> <span>${item.score} pts</span>`;
         leaderboardList.appendChild(li);
     });
-
     for (let i = count; i < 10; i++) {
         const li = document.createElement('li');
         li.innerHTML = `<span>#${i + 1} ----</span> <span>- pts</span>`;
@@ -197,37 +182,26 @@ function clearAllScoresData() {
     }
 }
 
-// =========================================================
-// 🌟 FUNGSI BARU: PRELOAD PAPAN SKOR TERLEBIH DAHULU
-// =========================================================
 function preloadLeaderboardSystem() {
-    console.log("Memulai preload papan skor...");
-    
-    // Tampilkan teks loading transisi yang rapi di layar samping
     const leaderboardList = document.getElementById('leaderboard-list');
     if (leaderboardList) {
         leaderboardList.innerHTML = '<li style="justify-content: center; color: #64748b; font-weight:600;">⏳ Memuat skor global...</li>';
     }
-
     if (useOnlineDatabase) {
-        db.collection("leaderboard")
-          .orderBy("score", "desc")
-          .onSnapshot((snapshot) => {
-              updateLeaderboardUI(snapshot, true);
-              console.log("Papan skor online berhasil dimuat terlebih dahulu.");
-          }, (error) => {
-              console.error("Firebase Snapshot error saat preload, beralih ke offline:", error);
-              useOnlineDatabase = false;
-              renderOfflineLeaderboard();
-          });
+        db.collection("leaderboard").orderBy("score", "desc").onSnapshot((snapshot) => {
+            updateLeaderboardUI(snapshot, true);
+        }, (error) => {
+            console.error("Firebase Snapshot error, beralih ke offline:", error);
+            useOnlineDatabase = false;
+            renderOfflineLeaderboard();
+        });
     } else {
         renderOfflineLeaderboard();
-        console.log("Papan skor offline lokal berhasil dimuat terlebih dahulu.");
     }
 }
 
 // =========================================================
-// DETAIL MODEL INDIVIDU OBJEK GAMEPLAY
+// MODEL OBJEK GAMEPLAY
 // =========================================================
 const bird = {
     x: 85,
@@ -278,7 +252,6 @@ const bird = {
             gradient.addColorStop(1, '#064e3b');
             ctx.fillStyle = gradient;
             ctx.fill();
-            
             ctx.beginPath();
             ctx.ellipse(-3, -3, 6, 3, Math.PI / 4, 0, Math.PI * 2);
             ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
@@ -294,14 +267,11 @@ const bird = {
             this.history = [];
             return;
         }
-
         this.velocity += gravity;
         this.y += this.velocity;
         this.history.push({ x: this.x, y: this.y, angle: this.angle });
         if (this.history.length > 4) this.history.shift();
-
         this.angle = Math.min(Math.PI / 5, Math.max(-Math.PI / 7, this.velocity * 0.05));
-
         if (this.y + this.radius > logicalHeight - 45) {
             this.y = logicalHeight - 45 - this.radius;
             gameOver();
@@ -359,66 +329,76 @@ class Particle {
         this.speedY = (Math.random() - 0.5) * 3;
         this.color = color;
         this.alpha = 1;
-        this.rotation = Math.random() * Math.PI;
-        this.rotSpeed = (Math.random() - 0.5) * 0.08;
     }
     update() {
         this.x += this.speedX;
         this.y += this.speedY;
-        this.rotation += this.rotSpeed;
         this.alpha -= 0.025;
     }
     draw() {
         if (this.alpha <= 0) return;
         ctx.save();
         ctx.globalAlpha = this.alpha;
-        ctx.translate(this.x, this.y);
-        ctx.rotate(this.rotation);
         ctx.fillStyle = this.color;
-        ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size);
+        ctx.fillRect(this.x, this.y, this.size, this.size);
         ctx.restore();
     }
 }
 
+// 🌟 REVISI PRESERVED DETAIL: MEMBANGUN SKEMA GRADASI DAN LIP PENONJOL PERSIS SEPERTI GAMBAR REFERENSI
 class Pipe {
     constructor() {
         this.topHeight = Math.random() * (logicalHeight - pipeGap - 180) + 60;
         this.bottomHeight = logicalHeight - this.topHeight - pipeGap - 45;
         this.x = logicalWidth;
-        this.width = 68;
+        this.width = 66; // Lebar badan pipa asli
         this.passed = false;
     }
 
     drawPipeSegment(yStart, height, isTop) {
         ctx.save();
-        let pipeGrad = ctx.createLinearGradient(this.x, 0, this.x + this.width, 0);
-        pipeGrad.addColorStop(0, '#059669');   
-        pipeGrad.addColorStop(0.2, '#10b981'); 
-        pipeGrad.addColorStop(0.7, '#059669'); 
-        pipeGrad.addColorStop(1, '#047857');   
-        ctx.fillStyle = pipeGrad;
+        
+        // 1. BUAT GRADASI PENCAHAYAAN UNTUK BADAN PIPA (Kiri-Tengah-Kanan Berdimensi)
+        let bodyGrad = ctx.createLinearGradient(this.x, 0, this.x + this.width, 0);
+        bodyGrad.addColorStop(0, '#2b936d');   // Sisi kiri agak gelap
+        bodyGrad.addColorStop(0.25, '#40b388'); // Transisi terang
+        bodyGrad.addColorStop(0.5, '#7ee6be');  // Highlight mengkilap tengah
+        bodyGrad.addColorStop(0.75, '#3ba87f'); // Transisi redup
+        bodyGrad.addColorStop(1, '#1e684d');   // Sisi kanan shadow bayangan
+
+        // Gambar Badan Pipa
+        ctx.fillStyle = bodyGrad;
         ctx.fillRect(this.x, yStart, this.width, height);
-        ctx.strokeStyle = 'rgba(4, 78, 59, 0.25)';
-        ctx.lineWidth = 2;
+        
+        // Outline Badan Pipa Hitam Tegas
+        ctx.strokeStyle = '#181a1b';
+        ctx.lineWidth = 2.5;
         ctx.strokeRect(this.x, yStart, this.width, height);
 
-        let lipX = this.x - 3;
-        let lipWidth = this.width + 6;
-        let lipHeight = 24;
+        // 2. TATA MULUT PIPA (LIP) - HARUS LEBIH LEBAR DAN MENONJOL KELUAR 3px KIRI & KANAN
+        let lipX = this.x - 3.5;
+        let lipWidth = this.width + 7;
+        let lipHeight = 25;
         let lipY = isTop ? (yStart + height - lipHeight) : yStart;
 
+        // Buat Gradasi Pencahayaan khusus untuk Mulut Pipa (Lebih Pekat Sesuai Gambar)
         let lipGrad = ctx.createLinearGradient(lipX, 0, lipX + lipWidth, 0);
-        lipGrad.addColorStop(0, '#047857');
-        lipGrad.addColorStop(0.2, '#34d399');
-        lipGrad.addColorStop(0.6, '#059669');
-        lipGrad.addColorStop(1, '#022c22');
+        lipGrad.addColorStop(0, '#1c5e46');   
+        lipGrad.addColorStop(0.3, '#2a8e69'); 
+        lipGrad.addColorStop(0.5, '#5cd6a8');  // Highlight refleksi tengah
+        lipGrad.addColorStop(0.8, '#247d5c'); 
+        lipGrad.addColorStop(1, '#13402f');   
+
+        // Gambar Kotak Mulut Pipa
         ctx.fillStyle = lipGrad;
         ctx.fillRect(lipX, lipY, lipWidth, lipHeight);
-        ctx.strokeStyle = '#022c22';
-        ctx.lineWidth = 1.5;
         ctx.strokeRect(lipX, lipY, lipWidth, lipHeight);
-        ctx.fillStyle = 'rgba(255,255,255,0.15)';
-        ctx.fillRect(lipX + 4, lipY + (lipHeight/2) - 2, lipWidth - 8, 4);
+
+        // 3. TAMBAHKAN GARIS AKSEN HORIZONTAL GELAP DI DALAM MULUT PIPA (Ciri Khas Gambar Referensi)
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.18)';
+        let lineY = isTop ? (lipY + 6) : (lipY + lipHeight - 10);
+        ctx.fillRect(lipX + 2, lineY, lipWidth - 4, 4);
+
         ctx.restore();
     }
 
@@ -428,13 +408,11 @@ class Pipe {
     }
 
     update() { this.x -= pipeSpeed; }
-
     collidesWith(birdObj) {
         let birdLeft = birdObj.x - birdObj.radius + 3;
         let birdRight = birdObj.x + birdObj.radius - 3;
         let birdTop = birdObj.y - birdObj.radius + 3;
         let birdBottom = birdObj.y + birdObj.radius - 3;
-
         if (birdRight > this.x && birdLeft < this.x + this.width) {
             if (birdTop < this.topHeight) return true;
             if (birdBottom > logicalHeight - 45 - this.bottomHeight) return true;
@@ -449,7 +427,6 @@ for (let i = 0; i < 4; i++) {
 
 function startGame() {
     let inputName = playerNameInput.value.trim();
-    
     if (inputName !== "") {
         current_player_name = inputName;
     } else {
@@ -458,20 +435,15 @@ function startGame() {
         playerNameInput.value = current_player_name; 
     }
 
-    // Memicu Mode Full Screen otomatis pada pembungkus game area saat dimainkan
-    const gameArea = document.querySelector('.game-area');
-    if (gameArea) {
-        if (gameArea.requestFullscreen) {
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    if (isAndroid) {
+        const gameArea = document.getElementById('main-game-area');
+        if (gameArea && gameArea.requestFullscreen) {
             gameArea.requestFullscreen().catch(err => console.log("Fullscreen ditolak:", err.message));
-        } else if (gameArea.webkitRequestFullscreen) {
-            gameArea.webkitRequestFullscreen();
-        } else if (gameArea.msRequestFullscreen) {
-            gameArea.msRequestFullscreen();
         }
     }
     
     canvas.focus(); 
-    
     bird.y = 220;
     bird.velocity = 0;
     bird.angle = 0;
@@ -481,24 +453,19 @@ function startGame() {
     score = 0;
     frameCount = 0;
     scoreDisplay.textContent = score;
-    
     nameBox.style.display = 'none';
     uiOverlay.style.opacity = '0';
     setTimeout(() => { uiOverlay.style.visibility = 'hidden'; }, 300);
-    
     setTimeout(() => { gameRunning = true; }, 12);
 }
 
 function gameOver() {
     if (gameRunning) {
         gameRunning = false;
-        
         saveScore(current_player_name, score); 
-        
         for(let i=0; i<15; i++) {
             particles.push(new Particle(bird.x, bird.y, '#ef4444'));
         }
-
         nameBox.style.display = 'block';
         uiOverlay.style.visibility = 'visible';
         uiOverlay.style.opacity = '1';
@@ -507,16 +474,36 @@ function gameOver() {
     }
 }
 
+if (exitFullscreenBtn) {
+    exitFullscreenBtn.addEventListener('click', () => {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        }
+    });
+}
+
+function handleFullscreenChange() {
+    const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+    if (!isFullscreen && !gameRunning) {
+        if (exitFullscreenBtn) exitFullscreenBtn.style.display = 'none';
+    } else if (isFullscreen) {
+        if (exitFullscreenBtn) exitFullscreenBtn.style.display = 'block';
+    }
+}
+document.addEventListener('fullscreenchange', handleFullscreenChange);
+document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+
 function animate() {
     ctx.clearRect(0, 0, logicalWidth, logicalHeight);
+    
     let skyGrad = ctx.createLinearGradient(0, 0, 0, logicalHeight);
-    skyGrad.addColorStop(0, '#bae6fd');  
-    skyGrad.addColorStop(0.5, '#e0f2fe'); 
-    skyGrad.addColorStop(0.85, '#ffedd5'); 
-    skyGrad.addColorStop(1, '#fef08a');   
+    skyGrad.addColorStop(0, '#bae6fd');
+    skyGrad.addColorStop(1, '#ffffff');
     ctx.fillStyle = skyGrad;
     ctx.fillRect(0, 0, logicalWidth, logicalHeight);
-
+    
     if (gameRunning) {
         frameCount++;
         if (frameCount % 220 === 0) clouds.push(new Cloud());
@@ -526,22 +513,18 @@ function animate() {
         clouds[i].draw();
         if (clouds[i].x + 100 < 0) clouds.splice(i, 1);
     }
-
     if (gameRunning) {
         if (pipes.length === 0 || frameCount % pipeSpawnRate === 0) {
             pipes.push(new Pipe());
         }
     }
-
     bird.update();
     bird.draw();
-
     for (let i = particles.length - 1; i >= 0; i--) {
         particles[i].update();
         particles[i].draw();
         if (particles[i].alpha <= 0) particles.splice(i, 1);
     }
-
     for (let i = pipes.length - 1; i >= 0; i--) {
         if (gameRunning) {
             pipes[i].update();
@@ -550,25 +533,28 @@ function animate() {
                 score++;
                 pipes[i].passed = true;
                 scoreDisplay.textContent = score;
-                scoreDisplay.style.transform = 'scale(1.25)';
-                setTimeout(() => scoreDisplay.style.transform = 'scale(1)', 100);
             }
         }
         pipes[i].draw();
         if (pipes[i].x + pipes[i].width < -20) pipes.splice(i, 1);
     }
-
-    ctx.fillStyle = '#064e3b';
+    
+    // 🌟 TANAH HIJAU TUA MATTE POLOS (Sesuai Gambar Referensi)
+    ctx.fillStyle = '#239169';
     ctx.fillRect(0, logicalHeight - 45, logicalWidth, 45);
-    ctx.fillStyle = '#047857';
-    ctx.fillRect(0, logicalHeight - 45, logicalWidth, 10);
-    ctx.fillStyle = '#10b981';
-    ctx.fillRect(0, logicalHeight - 45, logicalWidth, 4);
+    
+    // Garis Hitam Pembatas Tanah Atas yang Tegas
+    ctx.strokeStyle = '#181a1b';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(0, logicalHeight - 45);
+    ctx.lineTo(logicalWidth, logicalHeight - 45);
+    ctx.stroke();
 
     requestAnimationFrame(animate);
 }
 
-// Handler Upload & Crop Mekanisme
+// Event Listeners (Upload, Crop, Admin, dll)
 charUpload.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -626,7 +612,7 @@ window.addEventListener('keydown', (e) => {
 });
 
 canvas.addEventListener('click', () => { if (gameRunning) bird.jump(); });
-// Handler sentuhan smartphone yang bersahabat dengan fitur scroll layar luar canvas
+
 canvas.addEventListener('touchstart', (e) => {
     if (gameRunning) {
         if (e.touches.length === 1) {
@@ -634,11 +620,8 @@ canvas.addEventListener('touchstart', (e) => {
         }
     }
 }, { passive: true });
-startBtn.addEventListener('click', (e) => { e.stopPropagation(); startGame(); });
 
-// =========================================================
-// MODAL EVENT HANDLER: SISTEM VERIFIKASI ADMIN (MODULAR)
-// =========================================================
+startBtn.addEventListener('click', (e) => { e.stopPropagation(); startGame(); });
 
 clearScoresBtn.addEventListener('click', () => {
     adminPasswordInput.value = ''; 
@@ -651,15 +634,13 @@ adminCloseCross.addEventListener('click', () => {
 
 adminOkBtn.addEventListener('click', () => {
     const passwordInputValue = adminPasswordInput.value.trim();
-
     if (passwordInputValue === "") {
         adminModal.classList.remove('active');
         return;
     }
-
     if (verifyAdminPassword(passwordInputValue)) {
         adminModal.classList.remove('active'); 
-        if (confirm("Kata sandi dikonfirmasi. Apakah Anda yakin ingin menghapus SELURUH data skor secara permanen?")) {
+        if (confirm("Yakin ingin menghapus seluruh skor?")) {
             clearAllScoresData();
         }
     } else {
@@ -673,14 +654,8 @@ adminPasswordInput.addEventListener('keydown', (e) => {
     if (e.code === 'Enter') adminOkBtn.click();
 });
 
-// =========================================================
-// URUTAN EKSEKUSI UTAMA (PROSES MEMULAKAN WEBSITE)
-// =========================================================
-
-// 1. UTAMAKAN: Ambil data & load papan skor terlebih dahulu saat dokumen siap
 document.addEventListener('DOMContentLoaded', () => {
     preloadLeaderboardSystem();
 });
 
-// 2. JALANKAN: Siklus loop animasi Canvas utama game
 animate();
