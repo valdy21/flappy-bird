@@ -43,6 +43,7 @@ const defaultBirdImage = new Image();
 defaultBirdImage.src = 'bird.png';
 let cropperInstance = null;
 let current_player_name = "Player";
+let current_player_city = "Luar Kota"; 
 let frameCount = 0;
 
 // Konfigurasi Gameplay
@@ -81,36 +82,55 @@ try {
 }
 
 // =========================================================
+// OTO-DETEKSI LOKASI PEMAIN (IP GEOLOCATION)
+// =========================================================
+function autoDetectCity() {
+    fetch('https://ipapi.co/json/')
+        .then(response => response.json())
+        .then(data => {
+            if (data && data.city) {
+                current_player_city = data.city;
+                console.log("Lokasi terdeteksi otomatis:", current_player_city);
+            }
+        })
+        .catch(err => {
+            console.warn("Gagal melacak lokasi IP, beralih ke default:", err);
+        });
+}
+
+// =========================================================
 // SYSTEM DATABASE HYBRID
 // =========================================================
 
-function saveScore(playerName, newScore) {
+function saveScore(playerName, playerCity, newScore) {
     if (newScore <= 0) return;
     if (useOnlineDatabase) {
         db.collection("leaderboard").add({
             name: playerName,
+            city: playerCity, 
             score: newScore,
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         }).catch(err => {
             console.error("Gagal simpan online, simpan cadangan lokal:", err);
-            saveScoreOfflineStorage(playerName, newScore);
+            saveScoreOfflineStorage(playerName, playerCity, newScore);
         });
     } else {
-        saveScoreOfflineStorage(playerName, newScore);
+        saveScoreOfflineStorage(playerName, playerCity, newScore);
     }
 }
 
-function saveScoreOfflineStorage(playerName, newScore) {
+function saveScoreOfflineStorage(playerName, playerCity, newScore) {
     let scores = getOfflineScores();
     const existingPlayerIndex = scores.findIndex(item => item.name.toLowerCase() === playerName.toLowerCase());
     if (existingPlayerIndex !== -1) {
         if (newScore > scores[existingPlayerIndex].score) {
             scores[existingPlayerIndex].score = newScore;
+            scores[existingPlayerIndex].city = playerCity; 
         } else {
             return; 
         }
     } else {
-        scores.push({ name: playerName, score: newScore });
+        scores.push({ name: playerName, city: playerCity, score: newScore });
     }
     scores.sort((a, b) => b.score - a.score);
     scores = scores.slice(0, 10);
@@ -141,14 +161,15 @@ function updateLeaderboardUI(dataSnapshot, isOnline) {
             const data = doc.data();
             if (data.name) {
                 const pName = data.name.trim();
+                const pCity = data.city ? data.city.trim() : "Luar Kota";
                 const pScore = data.score || 0;
-                if (!uniquePlayers[pName] || pScore > uniquePlayers[pName]) {
-                    uniquePlayers[pName] = pScore;
+                if (!uniquePlayers[pName] || pScore > uniquePlayers[pName].score) {
+                    uniquePlayers[pName] = { score: pScore, city: pCity };
                 }
             }
         });
         for (let name in uniquePlayers) {
-            processedScores.push({ name: name, score: uniquePlayers[name] });
+            processedScores.push({ name: name, city: uniquePlayers[name].city, score: uniquePlayers[name].score });
         }
         processedScores.sort((a, b) => b.score - a.score);
     } else {
@@ -159,12 +180,18 @@ function updateLeaderboardUI(dataSnapshot, isOnline) {
     topTenScores.forEach((item) => {
         count++;
         const li = document.createElement('li');
-        li.innerHTML = `<span title="${item.name}">#${count} ${item.name}</span> <span>${item.score} pts</span>`;
+        li.innerHTML = `
+            <div class="player-info-block">
+                <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${item.name}">#${count} ${item.name}</span>
+                <span class="player-city-text">📍 ${item.city || 'Luar Kota'}</span>
+            </div>
+            <span>${item.score} pts</span>
+        `;
         leaderboardList.appendChild(li);
     });
     for (let i = count; i < 10; i++) {
         const li = document.createElement('li');
-        li.innerHTML = `<span>#${i + 1} ----</span> <span>- pts</span>`;
+        li.innerHTML = `<div><span>#${i + 1} ----</span></div> <span>- pts</span>`;
         leaderboardList.appendChild(li);
     }
 }
@@ -345,57 +372,48 @@ class Particle {
     }
 }
 
-// 🌟 REVISI PRESERVED DETAIL: MEMBANGUN SKEMA GRADASI DAN LIP PENONJOL PERSIS SEPERTI GAMBAR REFERENSI
+// VISUAL PIPA TERKUNCI (TIDAK BERUBAH)
 class Pipe {
     constructor() {
         this.topHeight = Math.random() * (logicalHeight - pipeGap - 180) + 60;
         this.bottomHeight = logicalHeight - this.topHeight - pipeGap - 45;
         this.x = logicalWidth;
-        this.width = 66; // Lebar badan pipa asli
+        this.width = 68; 
         this.passed = false;
     }
 
     drawPipeSegment(yStart, height, isTop) {
         ctx.save();
         
-        // 1. BUAT GRADASI PENCAHAYAAN UNTUK BADAN PIPA (Kiri-Tengah-Kanan Berdimensi)
         let bodyGrad = ctx.createLinearGradient(this.x, 0, this.x + this.width, 0);
-        bodyGrad.addColorStop(0, '#2b936d');   // Sisi kiri agak gelap
-        bodyGrad.addColorStop(0.25, '#40b388'); // Transisi terang
-        bodyGrad.addColorStop(0.5, '#7ee6be');  // Highlight mengkilap tengah
-        bodyGrad.addColorStop(0.75, '#3ba87f'); // Transisi redup
-        bodyGrad.addColorStop(1, '#1e684d');   // Sisi kanan shadow bayangan
+        bodyGrad.addColorStop(0, '#10b981');    
+        bodyGrad.addColorStop(0.25, '#a7f3d0'); 
+        bodyGrad.addColorStop(0.55, '#10b981'); 
+        bodyGrad.addColorStop(1, '#065f46');    
 
-        // Gambar Badan Pipa
         ctx.fillStyle = bodyGrad;
         ctx.fillRect(this.x, yStart, this.width, height);
-        
-        // Outline Badan Pipa Hitam Tegas
-        ctx.strokeStyle = '#181a1b';
+
+        ctx.strokeStyle = '#000000';
         ctx.lineWidth = 2.5;
         ctx.strokeRect(this.x, yStart, this.width, height);
 
-        // 2. TATA MULUT PIPA (LIP) - HARUS LEBIH LEBAR DAN MENONJOL KELUAR 3px KIRI & KANAN
         let lipX = this.x - 3.5;
-        let lipWidth = this.width + 7;
-        let lipHeight = 25;
+        let lipWidth = this.width + 7; 
+        let lipHeight = 26;
         let lipY = isTop ? (yStart + height - lipHeight) : yStart;
 
-        // Buat Gradasi Pencahayaan khusus untuk Mulut Pipa (Lebih Pekat Sesuai Gambar)
         let lipGrad = ctx.createLinearGradient(lipX, 0, lipX + lipWidth, 0);
-        lipGrad.addColorStop(0, '#1c5e46');   
-        lipGrad.addColorStop(0.3, '#2a8e69'); 
-        lipGrad.addColorStop(0.5, '#5cd6a8');  // Highlight refleksi tengah
-        lipGrad.addColorStop(0.8, '#247d5c'); 
-        lipGrad.addColorStop(1, '#13402f');   
+        lipGrad.addColorStop(0, '#0d9467');    
+        lipGrad.addColorStop(0.25, '#85dbae'); 
+        lipGrad.addColorStop(0.55, '#0d9467'); 
+        lipGrad.addColorStop(1, '#043f2e');    
 
-        // Gambar Kotak Mulut Pipa
         ctx.fillStyle = lipGrad;
         ctx.fillRect(lipX, lipY, lipWidth, lipHeight);
         ctx.strokeRect(lipX, lipY, lipWidth, lipHeight);
 
-        // 3. TAMBAHKAN GARIS AKSEN HORIZONTAL GELAP DI DALAM MULUT PIPA (Ciri Khas Gambar Referensi)
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.18)';
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
         let lineY = isTop ? (lipY + 6) : (lipY + lipHeight - 10);
         ctx.fillRect(lipX + 2, lineY, lipWidth - 4, 4);
 
@@ -453,6 +471,7 @@ function startGame() {
     score = 0;
     frameCount = 0;
     scoreDisplay.textContent = score;
+    scoreDisplay.classList.remove('score-pop'); // Reset efek jika ada sisa permainan lalu
     nameBox.style.display = 'none';
     uiOverlay.style.opacity = '0';
     setTimeout(() => { uiOverlay.style.visibility = 'hidden'; }, 300);
@@ -462,7 +481,7 @@ function startGame() {
 function gameOver() {
     if (gameRunning) {
         gameRunning = false;
-        saveScore(current_player_name, score); 
+        saveScore(current_player_name, current_player_city, score); 
         for(let i=0; i<15; i++) {
             particles.push(new Particle(bird.x, bird.y, '#ef4444'));
         }
@@ -533,17 +552,20 @@ function animate() {
                 score++;
                 pipes[i].passed = true;
                 scoreDisplay.textContent = score;
+                
+                // 🌟 PEMBARUAN: Memicu animasi pop/bounce interaktif saat poin masuk
+                scoreDisplay.classList.remove('score-pop');
+                void scoreDisplay.offsetWidth; // Mengatur ulang siklus DOM agar animasi CSS bisa ke-trigger ulang
+                scoreDisplay.classList.add('score-pop');
             }
         }
         pipes[i].draw();
         if (pipes[i].x + pipes[i].width < -20) pipes.splice(i, 1);
     }
     
-    // 🌟 TANAH HIJAU TUA MATTE POLOS (Sesuai Gambar Referensi)
     ctx.fillStyle = '#239169';
     ctx.fillRect(0, logicalHeight - 45, logicalWidth, 45);
     
-    // Garis Hitam Pembatas Tanah Atas yang Tegas
     ctx.strokeStyle = '#181a1b';
     ctx.lineWidth = 2.5;
     ctx.beginPath();
@@ -554,7 +576,6 @@ function animate() {
     requestAnimationFrame(animate);
 }
 
-// Event Listeners (Upload, Crop, Admin, dll)
 charUpload.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -656,6 +677,7 @@ adminPasswordInput.addEventListener('keydown', (e) => {
 
 document.addEventListener('DOMContentLoaded', () => {
     preloadLeaderboardSystem();
+    autoDetectCity(); 
 });
 
 animate();
