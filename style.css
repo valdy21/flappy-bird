@@ -433,3 +433,36 @@ canvas {
         max-width: 100%;
     }
 }
+
+/* =========================================================
+   STYLE TAMBAHAN SAAT LAYAR PENUH (AUTO FULLSCREEN)
+   ========================================================= */
+.game-area:fullscreen {
+    background-color: #f7fee7; /* Jaga agar background tetap hijau pastel lembut */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100vw;
+    height: 100vh;
+    padding: 10px;
+}
+
+/* Dukungan untuk iOS Safari / Webkit */
+.game-area:-webkit-full-screen {
+    background-color: #f7fee7;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100vw;
+    height: 100vh;
+}
+
+/* Menyembunyikan Judul Utama saat Fullscreen di HP agar area Canvas maksimal */
+.game-area:fullscreen h1 {
+    display: none;
+}
+.game-area:-webkit-full-screen h1 {
+    display: none;
+}
