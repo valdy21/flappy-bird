@@ -43,7 +43,7 @@ const defaultBirdImage = new Image();
 defaultBirdImage.src = 'bird.png';
 let cropperInstance = null;
 let current_player_name = "Player";
-let current_player_city = "Luar Kota"; 
+let current_player_city = "Luar Kota"; // Penampung lokasi IP otomatis
 let frameCount = 0;
 
 // Konfigurasi Gameplay
@@ -99,7 +99,7 @@ function autoDetectCity() {
 }
 
 // =========================================================
-// SYSTEM DATABASE HYBRID
+// SYSTEM DATABASE HYBRID (SINKRONISASI PARAMETER KOTA)
 // =========================================================
 
 function saveScore(playerName, playerCity, newScore) {
@@ -471,7 +471,7 @@ function startGame() {
     score = 0;
     frameCount = 0;
     scoreDisplay.textContent = score;
-    scoreDisplay.classList.remove('score-pop'); // Reset efek jika ada sisa permainan lalu
+    scoreDisplay.classList.remove('score-pop'); 
     nameBox.style.display = 'none';
     uiOverlay.style.opacity = '0';
     setTimeout(() => { uiOverlay.style.visibility = 'hidden'; }, 300);
@@ -553,10 +553,9 @@ function animate() {
                 pipes[i].passed = true;
                 scoreDisplay.textContent = score;
                 
-                // 🌟 PEMBARUAN: Memicu animasi pop/bounce interaktif saat poin masuk
                 scoreDisplay.classList.remove('score-pop');
-                void scoreDisplay.offsetWidth; // Mengatur ulang siklus DOM agar animasi CSS bisa ke-trigger ulang
-                scoreDisplay.classList.add('score-pop');
+                void scoreDisplay.offsetWidth; 
+                box = scoreDisplay.classList.add('score-pop');
             }
         }
         pipes[i].draw();
@@ -634,13 +633,15 @@ window.addEventListener('keydown', (e) => {
 
 canvas.addEventListener('click', () => { if (gameRunning) bird.jump(); });
 
+// 🌟 PERBAIKAN RESPONSIVITAS SMARTPHONE: Menggunakan passive: false dan preventDefault() agar ketukan instan & tidak terhambat browser
 canvas.addEventListener('touchstart', (e) => {
     if (gameRunning) {
         if (e.touches.length === 1) {
+            e.preventDefault(); // Mencegah penundaan klik/scroll bawaan browser di dalam kanvas
             bird.jump();
         }
     }
-}, { passive: true });
+}, { passive: false }); // Diubah menjadi false agar preventDefault() dapat dijalankan dengan valid
 
 startBtn.addEventListener('click', (e) => { e.stopPropagation(); startGame(); });
 
