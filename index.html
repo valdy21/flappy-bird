@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sky Flappy - Online Multiplayer Edition</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="main-layout">
+        <div class="game-area">
+            <h1>Sky Flappy</h1>
+            <div class="game-container">
+                <div id="score-display">0</div>
+                
+                <div id="ui-overlay">
+                    <h2 id="overlay-title">READY?</h2>
+                    
+                    <div class="name-container" id="name-box">
+                        <input type="text" id="player-name" placeholder="Masukkan Nama Anda" maxlength="25">
+                    </div>
+                    
+                    <div class="upload-container" id="upload-box">
+                        <label for="char-upload" class="upload-label">
+                            <span class="upload-icon">🚀</span>
+                            <span class="upload-text">Upload Karakter (Gambar)</span>
+                        </label>
+                        <input type="file" id="char-upload" accept="image/*">
+                        
+                        <div id="preview-container" style="display:none;">
+                            <img id="char-preview" src="" alt="Preview">
+                            <button id="reset-char-btn">Gunakan Bola Neon</button>
+                        </div>
+                    </div>
+
+                    <button class="btn-start" id="start-btn">Mainkan</button>
+                    <p class="instructions" id="instruction-text">Tekan Spasi / Klik Layar untuk Melompat</p>
+                </div>
+
+                <canvas id="gameCanvas" width="400" height="550" tabindex="1"></canvas>
+            </div>
+        </div>
+
+        <div class="leaderboard-container">
+            <h2>🏆 10 SKOR GLOBAL TERTINGGI</h2>
+            <ol id="leaderboard-list">
+                </ol>
+            <button id="clear-scores-btn">Reset Papan Skor (Admin)</button>
+        </div>
+    </div>
+
+    <div id="crop-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Sesuaikan Karakter Anda (Rasio 1:1)</h3>
+            <div class="crop-area">
+                <img id="image-to-crop" src="">
+            </div>
+            <div class="modal-actions">
+                <button id="cancel-crop-btn" class="btn-secondary">Batal</button>
+                <button id="crop-done-btn" class="btn-primary">Potong & Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="admin-modal" class="modal-overlay">
+        <div class="modal-content admin-modal-box">
+            <button id="admin-close-cross" class="close-cross-btn">&times;</button>
+            
+            <div class="admin-modal-body">
+                <span class="admin-icon-lock">🔒</span>
+                <h3>Akses Terbatas</h3>
+                <p>Silakan hubungi admin <strong>Rivaldy</strong> untuk melakukan reset papan skor global.</p>
+                
+                <input type="password" id="admin-password-input" placeholder="Masukkan Kode Verifikasi Admin">
+            </div>
+            
+            <div class="modal-actions admin-actions">
+                <button id="admin-ok-btn" class="btn-primary">Oke</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    
+    <script src="auth.js"></script>
+    
+    <script src="game.js"></script>
+</body>
+</html>

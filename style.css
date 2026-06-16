@@ -1,0 +1,435 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: #f0fdf4; 
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow: hidden;
+    color: #0f172a;
+}
+
+.main-layout {
+    display: flex;
+    gap: 30px;
+    align-items: flex-start;
+    max-width: 900px;
+    width: 100%;
+    padding: 20px;
+    justify-content: center;
+}
+
+.game-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+h1 {
+    font-weight: 900;
+    letter-spacing: 3px;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    background: linear-gradient(45deg, #0284c7, #10b981);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 4px 12px rgba(2, 132, 199, 0.15);
+}
+
+.game-container {
+    position: relative;
+    box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+    border-radius: 24px;
+    overflow: hidden;
+    border: 6px solid #ffffff;
+    width: 400px;
+    height: 550px;
+}
+
+canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    outline: none; /* Hilangkan garis kotak focus browser */
+    background: linear-gradient(to bottom, #bae6fd, #f0f9ff);
+}
+
+#ui-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    transition: opacity 0.2s ease;
+    z-index: 5;
+    padding: 20px;
+}
+
+#overlay-title {
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: #0369a1;
+    margin-bottom: 15px;
+    letter-spacing: 1px;
+    text-align: center;
+}
+
+#player-name {
+    padding: 12px 18px;
+    border-radius: 12px;
+    border: 2px solid #cbd5e1;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    width: 240px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    color: #334155;
+    background: #ffffff;
+    margin-bottom: 15px;
+}
+
+#player-name:focus {
+    border-color: #0284c7;
+    box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.15);
+}
+
+.upload-container {
+    margin-bottom: 25px;
+    width: 100%;
+    max-width: 260px;
+    text-align: center;
+}
+
+.upload-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 14px;
+    background: #f0f9ff;
+    border: 2px dashed #0284c7;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+}
+
+.upload-label:hover {
+    background: #e0f2fe;
+    transform: scale(1.02);
+}
+
+.upload-icon {
+    font-size: 26px;
+    margin-bottom: 5px;
+}
+
+.upload-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: #0369a1;
+}
+
+#char-upload {
+    display: none;
+}
+
+#preview-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    background: #fff;
+    padding: 12px;
+    border-radius: 14px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+}
+
+#char-preview {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+#reset-char-btn {
+    background: none;
+    border: none;
+    color: #ef4444;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.btn-start {
+    padding: 14px 44px;
+    font-size: 18px;
+    font-weight: 800;
+    color: #fff;
+    background: linear-gradient(45deg, #0284c7, #10b981);
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 10px 25px -5px rgba(2, 132, 199, 0.4);
+    transition: transform 0.2s, box-shadow 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.btn-start:hover {
+    transform: scale(1.04);
+    box-shadow: 0 15px 30px -5px rgba(2, 132, 199, 0.5);
+}
+
+#score-display {
+    position: absolute;
+    top: 25px;
+    font-size: 4rem;
+    font-weight: 900;
+    color: #0284c7;
+    text-shadow: 3px 3px 0px #ffffff;
+    pointer-events: none;
+    width: 100%;
+    text-align: center;
+    z-index: 2;
+    transition: transform 0.1s;
+}
+
+.instructions {
+    margin-top: 15px;
+    font-size: 13px;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.leaderboard-container {
+    background: #ffffff;
+    padding: 24px;
+    border-radius: 24px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05);
+    border: 4px solid #fff;
+    width: 320px; 
+    display: flex;
+    flex-direction: column;
+}
+
+.leaderboard-container h2 {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #1e293b;
+    margin-bottom: 15px;
+    text-align: center;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #f1f5f9;
+    padding-bottom: 12px;
+}
+
+#leaderboard-list li {
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+    padding: 10px 14px;
+    border-radius: 12px;
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+    background: #f8fafc;
+    border: 1px solid #f1f5f9;
+}
+
+#leaderboard-list li span:first-child {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px; 
+}
+
+#leaderboard-list li:nth-child(1) { background: #fef3c7; color: #b45309; font-weight: 700; border-color: #fde68a; } 
+#leaderboard-list li:nth-child(2) { background: #f1f5f9; color: #475569; border-color: #e2e8f0; } 
+#leaderboard-list li:nth-child(3) { background: #ffedd5; color: #c2410c; border-color: #fed7aa; } 
+
+#clear-scores-btn {
+    margin-top: 15px;
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+    transition: color 0.2s;
+}
+#clear-scores-btn:hover {
+    color: #ef4444;
+}
+
+/* Modal Struktur Utama */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-content {
+    background: #ffffff;
+    padding: 24px;
+    border-radius: 24px;
+    max-width: 450px;
+    width: 90%;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    text-align: center;
+    position: relative;
+}
+
+.crop-area {
+    max-height: 320px;
+    background: #f8fafc;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.crop-area img {
+    max-width: 100%;
+    display: block;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.btn-primary {
+    background: #0284c7;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.btn-secondary {
+    background: #e2e8f0;
+    color: #475569;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+/* GAYA DESAIN ELEGAN UNTUK POP-UP CUSTOM MODAL ADMIN */
+.admin-modal-box {
+    max-width: 360px;
+    padding: 32px 24px 24px 24px;
+    border: 1px solid #f1f5f9;
+}
+
+.close-cross-btn {
+    position: absolute;
+    top: 14px;
+    right: 18px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #94a3b8;
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.2s;
+}
+
+.close-cross-btn:hover {
+    color: #64748b;
+}
+
+.admin-modal-body h3 {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #1e293b;
+    margin-bottom: 8px;
+}
+
+.admin-modal-body p {
+    font-size: 13.5px;
+    color: #64748b;
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
+
+.admin-icon-lock {
+    display: inline-block;
+    font-size: 32px;
+    margin-bottom: 12px;
+}
+
+#admin-password-input {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 13px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    outline: none;
+    text-align: center;
+    color: #334155;
+    transition: border-color 0.2s;
+}
+
+#admin-password-input:focus {
+    border-color: #0284c7;
+}
+
+.admin-actions {
+    justify-content: center;
+    width: 100%;
+}
+
+.admin-actions button {
+    width: 100%;
+    padding: 12px;
+    border-radius: 12px;
+}
+
+@media (max-width: 740px) {
+    .main-layout {
+        flex-direction: column;
+        align-items: center;
+    }
+    .leaderboard-container {
+        width: 400px;
+        max-width: 100%;
+    }
+}
