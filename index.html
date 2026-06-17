@@ -20,43 +20,39 @@
                     
                     <div class="name-container" id="name-box">
                         <input type="text" id="player-name" placeholder="Masukkan Nama Anda" maxlength="25">
-                        
                     </div>
                     
                     <div class="upload-container" id="upload-box">
-                        <!-- <label for="char-upload" class="upload-label">
-                            <span class="upload-icon">🚀</span>
+                        <label for="char-upload" class="upload-label">
+                            <span class="upload-icon">📸</span>
                             <span class="upload-text">Upload Karakter (Gambar)</span>
-                        </label> -->
+                        </label>
                         <input type="file" id="char-upload" accept="image/*">
                         
                         <div id="preview-container" style="display:none;">
                             <img id="char-preview" src="" alt="Preview">
-                            <button id="reset-char-btn">Gunakan Bola Neon</button>
+                            <button id="reset-char-btn">Ganti Gambar</button>
                         </div>
                     </div>
-
+                    
                     <button class="btn-start" id="start-btn">Mainkan</button>
-                    <p class="instructions" id="instruction-text">Tekan Spasi / Klik Layar untuk Melompat</p>
+                    <div class="instructions">Tekan [ SPASI ] atau Sentuh Layar untuk Melompat</div>
                 </div>
-
-                <canvas id="gameCanvas" width="400" height="550" tabindex="1"></canvas>
+                <canvas id="gameCanvas"></canvas>
             </div>
-            
-            <button id="exit-fullscreen-btn" style="display: none;">🏠 Keluar Layar Penuh</button>
         </div>
 
         <div class="leaderboard-container">
-            <h2>🏆 10 SKOR GLOBAL TERTINGGI</h2>
-            <ol id="leaderboard-list">
-                </ol>
-            <button id="clear-scores-btn">Reset Papan Skor (Admin)</button>
+            <h2>🏆 TOP 10 SKOR GLOBAL</h2>
+            <ul id="leaderboard-list">
+                </ul>
+            <button id="clear-scores-btn">⚙️ Reset Database (Admin Only)</button>
         </div>
     </div>
 
     <div id="crop-modal" class="modal-overlay">
         <div class="modal-content">
-            <h3>Sesuaikan Karakter Anda (Rasio 1:1)</h3>
+            <h3>Sesuaikan Karakter Anda</h3>
             <div class="crop-area">
                 <img id="image-to-crop" src="">
             </div>
@@ -71,7 +67,7 @@
         <div class="modal-content admin-modal-box">
             <button id="admin-close-cross" class="close-cross-btn">&times;</button>
             <div class="admin-modal-body">
-                <span class="admin-icon-lock">🔒</span>
+                <span class="admin-icon-lock">🔐</span>
                 <h3>Akses Terbatas</h3>
                 <p>Silakan hubungi admin <strong>Rivaldy Ganteng</strong> untuk melakukan reset papan skor global.</p>
                 <input type="password" id="admin-password-input" placeholder="Masukkan Kode Verifikasi Admin">
@@ -85,7 +81,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-    
     <script src="auth.js"></script>
     <script src="game.js"></script>
 </body>
