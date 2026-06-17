@@ -377,7 +377,7 @@ class Particle {
     }
 }
 
-// KUNCI VISUAL PIPA (TIDAK BERUBAH)
+// 🌟 PIPA KUNCIAN VISUAL UTUH (Gradasi Kilat Sisi Kiri-Tengah + Mulut Lebih Gelap 20% Menonjol)
 class Pipe {
     constructor() {
         this.topHeight = Math.random() * (logicalHeight - pipeGap - 180) + 60;
@@ -449,8 +449,6 @@ for (let i = 0; i < 4; i++) {
 }
 
 function startGame() {
-    if (gameRunning) return; 
-
     let inputName = playerNameInput.value.trim();
     if (inputName !== "") {
         current_player_name = inputName;
@@ -460,7 +458,6 @@ function startGame() {
         playerNameInput.value = current_player_name; 
     }
     
-    canvas.focus(); 
     bird.y = 220;
     bird.velocity = 0;
     bird.angle = 0;
@@ -472,9 +469,14 @@ function startGame() {
     scoreDisplay.textContent = score;
     scoreDisplay.classList.remove('score-pop'); 
     nameBox.style.display = 'none';
+    
+    // 🌟 PERBAIKAN 1: Sembunyikan overlay total dan matikan pointer-events agar klik mouse/sentuh tembus langsung ke kanvas game
     uiOverlay.style.opacity = '0';
-    setTimeout(() => { uiOverlay.style.visibility = 'hidden'; }, 300);
-    setTimeout(() => { gameRunning = true; }, 12);
+    uiOverlay.style.pointerEvents = 'none'; 
+    uiOverlay.style.visibility = 'hidden';
+    
+    canvas.focus(); 
+    setTimeout(() => { gameRunning = true; }, 40);
 }
 
 function gameOver() {
@@ -485,6 +487,9 @@ function gameOver() {
             particles.push(new Particle(bird.x, bird.y, '#ef4444'));
         }
         nameBox.style.display = 'block';
+        
+        // Kembalikan interaksi overlay saat game over
+        uiOverlay.style.pointerEvents = 'auto'; 
         uiOverlay.style.visibility = 'visible';
         uiOverlay.style.opacity = '1';
         overlayTitle.innerHTML = `GAME OVER<br><span style="font-size: 15px; color: #475569; font-weight:700;">${current_player_name}: ${score} pts</span>`;
@@ -605,33 +610,33 @@ window.addEventListener('keydown', (e) => {
     if (e.code === 'Space') {
         e.preventDefault();
         if (gameRunning) bird.jump();
-        else if (uiOverlay.style.visibility !== 'hidden' && uiOverlay.style.opacity === '1') startGame();
+        else if (uiOverlay.style.visibility !== 'hidden') startGame();
     }
 });
 
-canvas.addEventListener('click', () => { if (gameRunning) bird.jump(); });
+// 🌟 PERBAIKAN 2: Kontrol Utama Klik Mouse untuk PC
+canvas.addEventListener('click', (e) => { 
+    if (gameRunning) {
+        bird.jump(); 
+    }
+});
 
+// 🌟 PERBAIKAN 3: Kontrol Utama Sentuh Layar untuk Smartphone
 canvas.addEventListener('touchstart', (e) => {
     if (gameRunning) {
-        if (e.touches.length === 1) {
-            e.preventDefault(); 
-            bird.jump();
-        }
+        // Jangan panggil e.preventDefault() di sini agar browser mobile tidak mengunci interaksi thread canvas
+        bird.jump();
     }
-}, { passive: false });
+}, { passive: true }); // Ubah ke passive true agar eksekusi lompatan instan tanpa interupsi security browser mobile
 
-// =========================================================================
-// 🌟 SOLUSI TOTAL SATU KALI KLIK INSTAN MAIN (BEBAS RESTRIKSI FULLSCREEN)
-// =========================================================================
-function handleStartButtonTrigger(e) {
+// Pemicu Tombol Mulai
+function handleStartTrigger(e) {
     e.preventDefault();
     e.stopPropagation();
     startGame();
 }
-
-// Ikat langsung menggunakan event pointer mobile & desktop untuk bypass delay browser 300ms
-startBtn.addEventListener('touchstart', handleStartButtonTrigger, { passive: false });
-startBtn.addEventListener('click', handleStartButtonTrigger);
+startBtn.addEventListener('touchstart', handleStartTrigger, { passive: false });
+startBtn.addEventListener('click', handleStartTrigger);
 
 clearScoresBtn.addEventListener('click', () => {
     adminPasswordInput.value = ''; 
@@ -667,6 +672,7 @@ adminPasswordInput.addEventListener('keydown', (e) => {
 document.addEventListener('DOMContentLoaded', () => {
     preloadLeaderboardSystem();
     autoDetectCity(); 
+    uiOverlay.style.pointerEvents = 'auto'; // Pastikan overlay bisa diklik saat awal muat halaman
     if (playerNameInput) playerNameInput.focus();
 });
 
