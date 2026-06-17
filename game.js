@@ -22,7 +22,6 @@ const adminModal = document.getElementById('admin-modal');
 const adminCloseCross = document.getElementById('admin-close-cross');
 const adminOkBtn = document.getElementById('admin-ok-btn');
 const adminPasswordInput = document.getElementById('admin-password-input');
-const exitFullscreenBtn = document.getElementById('exit-fullscreen-btn');
 
 // Optimasi Retina Display / HDPI Anti-Blur
 const dpr = window.devicePixelRatio || 1;
@@ -43,7 +42,7 @@ const defaultBirdImage = new Image();
 defaultBirdImage.src = 'bird.png';
 let cropperInstance = null;
 let current_player_name = "Player";
-let current_player_city = "Luar Kota"; // Penampung lokasi IP otomatis
+let current_player_city = "Luar Kota"; 
 let frameCount = 0;
 
 // Konfigurasi Gameplay
@@ -52,6 +51,13 @@ const jumpStrength = -5.3;
 const pipeSpeed = 2.4;
 const pipeSpawnRate = 95; 
 const pipeGap = 145;
+
+// Fallback keamanan jika auth.js tidak termuat sempurna
+if (typeof verifyAdminPassword === 'undefined') {
+    window.verifyAdminPassword = function(pass) {
+        return pass === "valdydewa123";
+    };
+}
 
 // =========================================================
 // ⚠️ KONFIGURASI DATABASE FIREBASE ONLINE
@@ -99,12 +105,11 @@ function autoDetectCity() {
 }
 
 // =========================================================
-// SYSTEM DATABASE HYBRID (SINKRONISASI PARAMETER KOTA)
+// SYSTEM DATABASE HYBRID
 // =========================================================
-
 function saveScore(playerName, playerCity, newScore) {
     if (newScore <= 0) return;
-    if (useOnlineDatabase) {
+    if (useOnlineDatabase && db) {
         db.collection("leaderboard").add({
             name: playerName,
             city: playerCity, 
@@ -155,11 +160,11 @@ function updateLeaderboardUI(dataSnapshot, isOnline) {
     let count = 0;
     let processedScores = [];
 
-    if (isOnline) {
+    if (isOnline && dataSnapshot) {
         let uniquePlayers = {};
         dataSnapshot.forEach((doc) => {
             const data = doc.data();
-            if (data.name) {
+            if (data && data.name) {
                 const pName = data.name.trim();
                 const pCity = data.city ? data.city.trim() : "Luar Kota";
                 const pScore = data.score || 0;
@@ -173,7 +178,7 @@ function updateLeaderboardUI(dataSnapshot, isOnline) {
         }
         processedScores.sort((a, b) => b.score - a.score);
     } else {
-        processedScores = dataSnapshot;
+        processedScores = Array.isArray(dataSnapshot) ? dataSnapshot : [];
     }
 
     const topTenScores = processedScores.slice(0, 10);
@@ -197,7 +202,7 @@ function updateLeaderboardUI(dataSnapshot, isOnline) {
 }
 
 function clearAllScoresData() {
-    if (useOnlineDatabase) {
+    if (useOnlineDatabase && db) {
         db.collection("leaderboard").get().then((snapshot) => {
             const batch = db.batch();
             snapshot.forEach((doc) => { batch.delete(doc.ref); });
@@ -214,7 +219,7 @@ function preloadLeaderboardSystem() {
     if (leaderboardList) {
         leaderboardList.innerHTML = '<li style="justify-content: center; color: #64748b; font-weight:600;">⏳ Memuat skor global...</li>';
     }
-    if (useOnlineDatabase) {
+    if (useOnlineDatabase && db) {
         db.collection("leaderboard").orderBy("score", "desc").onSnapshot((snapshot) => {
             updateLeaderboardUI(snapshot, true);
         }, (error) => {
@@ -372,7 +377,7 @@ class Particle {
     }
 }
 
-// VISUAL PIPA TERKUNCI (TIDAK BERUBAH)
+// KUNCI VISUAL PIPA (TIDAK BERUBAH)
 class Pipe {
     constructor() {
         this.topHeight = Math.random() * (logicalHeight - pipeGap - 180) + 60;
@@ -444,6 +449,8 @@ for (let i = 0; i < 4; i++) {
 }
 
 function startGame() {
+    if (gameRunning) return; 
+
     let inputName = playerNameInput.value.trim();
     if (inputName !== "") {
         current_player_name = inputName;
@@ -451,14 +458,6 @@ function startGame() {
         const randomId = Math.floor(1000 + Math.random() * 9000); 
         current_player_name = "Player-" + randomId;
         playerNameInput.value = current_player_name; 
-    }
-
-    const isAndroid = /Android/i.test(navigator.userAgent);
-    if (isAndroid) {
-        const gameArea = document.getElementById('main-game-area');
-        if (gameArea && gameArea.requestFullscreen) {
-            gameArea.requestFullscreen().catch(err => console.log("Fullscreen ditolak:", err.message));
-        }
     }
     
     canvas.focus(); 
@@ -492,27 +491,6 @@ function gameOver() {
         startBtn.textContent = 'Main Lagi';
     }
 }
-
-if (exitFullscreenBtn) {
-    exitFullscreenBtn.addEventListener('click', () => {
-        if (document.exitFullscreen) {
-            document.exitFullscreen();
-        } else if (document.webkitExitFullscreen) {
-            document.webkitExitFullscreen();
-        }
-    });
-}
-
-function handleFullscreenChange() {
-    const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
-    if (!isFullscreen && !gameRunning) {
-        if (exitFullscreenBtn) exitFullscreenBtn.style.display = 'none';
-    } else if (isFullscreen) {
-        if (exitFullscreenBtn) exitFullscreenBtn.style.display = 'block';
-    }
-}
-document.addEventListener('fullscreenchange', handleFullscreenChange);
-document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
 
 function animate() {
     ctx.clearRect(0, 0, logicalWidth, logicalHeight);
@@ -555,7 +533,7 @@ function animate() {
                 
                 scoreDisplay.classList.remove('score-pop');
                 void scoreDisplay.offsetWidth; 
-                box = scoreDisplay.classList.add('score-pop');
+                scoreDisplay.classList.add('score-pop');
             }
         }
         pipes[i].draw();
@@ -633,17 +611,27 @@ window.addEventListener('keydown', (e) => {
 
 canvas.addEventListener('click', () => { if (gameRunning) bird.jump(); });
 
-// 🌟 PERBAIKAN RESPONSIVITAS SMARTPHONE: Menggunakan passive: false dan preventDefault() agar ketukan instan & tidak terhambat browser
 canvas.addEventListener('touchstart', (e) => {
     if (gameRunning) {
         if (e.touches.length === 1) {
-            e.preventDefault(); // Mencegah penundaan klik/scroll bawaan browser di dalam kanvas
+            e.preventDefault(); 
             bird.jump();
         }
     }
-}, { passive: false }); // Diubah menjadi false agar preventDefault() dapat dijalankan dengan valid
+}, { passive: false });
 
-startBtn.addEventListener('click', (e) => { e.stopPropagation(); startGame(); });
+// =========================================================================
+// 🌟 SOLUSI TOTAL SATU KALI KLIK INSTAN MAIN (BEBAS RESTRIKSI FULLSCREEN)
+// =========================================================================
+function handleStartButtonTrigger(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    startGame();
+}
+
+// Ikat langsung menggunakan event pointer mobile & desktop untuk bypass delay browser 300ms
+startBtn.addEventListener('touchstart', handleStartButtonTrigger, { passive: false });
+startBtn.addEventListener('click', handleStartButtonTrigger);
 
 clearScoresBtn.addEventListener('click', () => {
     adminPasswordInput.value = ''; 
@@ -679,6 +667,7 @@ adminPasswordInput.addEventListener('keydown', (e) => {
 document.addEventListener('DOMContentLoaded', () => {
     preloadLeaderboardSystem();
     autoDetectCity(); 
+    if (playerNameInput) playerNameInput.focus();
 });
 
 animate();
