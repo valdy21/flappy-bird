@@ -344,9 +344,9 @@ class Cloud {
         ctx.fillStyle = cloudGrad;
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.baseSize, 0, Math.PI * 2);
-        ctx.arc(this.x + this.baseSize * 0.65, this.y - this.baseSize * 0.25, this.baseSize * 0.8, 0, Math.PI * 2);
-        ctx.arc(this.x - this.baseSize * 0.65, this.y + this.baseSize * 0.1, this.baseSize * 0.7, 0, Math.PI * 2);
-        ctx.arc(this.x + this.baseSize * 1.2, this.y + this.baseSize * 0.15, this.baseSize * 0.5, 0, Math.PI * 2);
+        ctx.arc(this.x + this.baseSize * 1.0, this.y - this.baseSize * 0.15, this.baseSize * 0.8, 0, Math.PI * 2);
+        ctx.arc(this.x - this.baseSize * 1.0, this.y + this.baseSize * 0.1, this.baseSize * 0.7, 0, Math.PI * 2);
+        ctx.arc(this.x + this.baseSize * 1.0, this.y + this.baseSize * 0.15, this.baseSize * 0.5, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
     }
