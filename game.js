@@ -22,6 +22,7 @@ const adminModal = document.getElementById('admin-modal');
 const adminCloseCross = document.getElementById('admin-close-cross');
 const adminOkBtn = document.getElementById('admin-ok-btn');
 const adminPasswordInput = document.getElementById('admin-password-input');
+const exitFullscreenBtn = document.getElementById('exit-fullscreen-btn');
 
 // Optimasi Retina Display / HDPI Anti-Blur
 const dpr = window.devicePixelRatio || 1;
@@ -52,7 +53,7 @@ const pipeSpeed = 2.4;
 const pipeSpawnRate = 95; 
 const pipeGap = 145;
 
-// Pembatas Frame Rate (Mengunci 60 FPS di PC Layar 144Hz/240Hz)
+// Pembatas Frame Rate (Mengunci kecepatan konstan 60 FPS di PC Monitor Gaming 144Hz/240Hz)
 let lastTime = 0;
 const fpsInterval = 1000 / 60; 
 
@@ -102,20 +103,51 @@ function autoDetectCity() {
 }
 
 // =========================================================
-// SYSTEM DATABASE HYBRID
+// SYSTEM DATABASE HYBRID (ANTI-DUPLIKAT & TOLERANSI HURUF BESAR/KECIL)
 // =========================================================
 function saveScore(playerName, playerCity, newScore) {
     if (newScore <= 0) return;
+    
+    // Standarisasi nama menjadi huruf kecil untuk pengecekan di database (agar tidak terpengaruh kapitalisasi)
+    const lowerInputName = playerName.toLowerCase().trim();
+
     if (useOnlineDatabase) {
-        db.collection("leaderboard").add({
-            name: playerName,
-            city: playerCity, 
-            score: newScore,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        }).catch(err => {
-            console.error("Gagal simpan online, simpan cadangan lokal:", err);
-            saveScoreOfflineStorage(playerName, playerCity, newScore);
-        });
+        // Cari di database menggunakan nama lowercase sebagai key pencarian unik
+        db.collection("leaderboard")
+          .where("searchName", "==", lowerInputName)
+          .get()
+          .then((snapshot) => {
+              if (!snapshot.empty) {
+                  // Jika nama sudah ada, ambil dokumen pertamanya
+                  let doc = snapshot.docs[0];
+                  let oldScore = doc.data().score || 0;
+                  
+                  // Hanya update data jika skor yang baru lebih tinggi dari rekor lamanya
+                  if (newScore > oldScore) {
+                      doc.ref.update({
+                          name: playerName, // Update tampilan nama dengan format penulisan terbaru
+                          score: newScore,
+                          city: playerCity,
+                          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                      }).then(() => console.log("Skor tertinggi baru berhasil diperbarui online!"));
+                  } else {
+                      console.log("Skor baru lebih kecil/sama. Database online tidak diubah.");
+                  }
+              } else {
+                  // Jika nama benar-benar belum terdaftar, buat baris data baru
+                  db.collection("leaderboard").add({
+                      name: playerName,         // Format penulisan asli untuk tampilan leaderboard
+                      searchName: lowerInputName, // Format huruf kecil mati untuk validasi anti-duplikat
+                      city: playerCity, 
+                      score: newScore,
+                      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                  }).then(() => console.log("Player baru berhasil disimpan online!"));
+              }
+          })
+          .catch(err => {
+              console.error("Gagal verifikasi online, mengalihkan ke sistem offline lokal:", err);
+              saveScoreOfflineStorage(playerName, playerCity, newScore);
+          });
     } else {
         saveScoreOfflineStorage(playerName, playerCity, newScore);
     }
@@ -123,10 +155,15 @@ function saveScore(playerName, playerCity, newScore) {
 
 function saveScoreOfflineStorage(playerName, playerCity, newScore) {
     let scores = getOfflineScores();
-    const existingPlayerIndex = scores.findIndex(item => item.name.toLowerCase() === playerName.toLowerCase());
+    const lowerInputName = playerName.toLowerCase().trim();
+    
+    // Cari index player dengan toleransi huruf besar/kecil di memori lokal
+    const existingPlayerIndex = scores.findIndex(item => item.name.toLowerCase().trim() === lowerInputName);
+    
     if (existingPlayerIndex !== -1) {
         if (newScore > scores[existingPlayerIndex].score) {
             scores[existingPlayerIndex].score = newScore;
+            scores[existingPlayerIndex].name = playerName; // Sinkronisasi format penulisan nama teranyar
             scores[existingPlayerIndex].city = playerCity; 
         } else {
             return; 
@@ -159,19 +196,29 @@ function updateLeaderboardUI(dataSnapshot, isOnline) {
 
     if (isOnline) {
         let uniquePlayers = {};
+        
         dataSnapshot.forEach((doc) => {
             const data = doc.data();
             if (data.name) {
+                // Gunakan searchName (lowercase) atau buat fallback lowercase untuk memastikan anti-duplikat berlapis
+                const keyName = data.searchName ? data.searchName.trim() : data.name.toLowerCase().trim();
                 const pName = data.name.trim();
                 const pCity = data.city ? data.city.trim() : "Luar Kota";
                 const pScore = data.score || 0;
-                if (!uniquePlayers[pName] || pScore > uniquePlayers[pName].score) {
-                    uniquePlayers[pName] = { score: pScore, city: pCity };
+                
+                // Ambil skor paling tinggi jika di dalam snapshot mentah firebase masih tersisa data lama yang ganda
+                if (!uniquePlayers[keyName] || pScore > uniquePlayers[keyName].score) {
+                    uniquePlayers[keyName] = { displayName: pName, score: pScore, city: pCity };
                 }
             }
         });
-        for (let name in uniquePlayers) {
-            processedScores.push({ name: name, city: uniquePlayers[name].city, score: uniquePlayers[name].score });
+        
+        for (let key in uniquePlayers) {
+            processedScores.push({ 
+                name: uniquePlayers[key].displayName, 
+                city: uniquePlayers[key].city, 
+                score: uniquePlayers[key].score 
+            });
         }
         processedScores.sort((a, b) => b.score - a.score);
     } else {
@@ -454,7 +501,7 @@ function startGame() {
         playerNameInput.value = current_player_name; 
     }
 
-    // 🌟 FULL SCREEN DIBUANG TOTAL AGAR TIDAK MASUK LAGI SAAT MAIN KEMBALI DI HP
+    // Full screen dibuang total agar smartphone tidak lock layar penuh kembali
     canvas.focus(); 
     bird.y = 220;
     bird.velocity = 0;
@@ -468,7 +515,7 @@ function startGame() {
     scoreDisplay.classList.remove('score-pop'); 
     nameBox.style.display = 'none';
     
-    // Sembunyikan overlay visual & matikan interaksinya secara instan
+    // Sembunyikan lapis pelindung overlay visual & matikan interaksinya secara instan
     uiOverlay.style.opacity = '0';
     uiOverlay.style.pointerEvents = 'none';
     uiOverlay.style.visibility = 'hidden';
@@ -485,7 +532,7 @@ function gameOver() {
         }
         nameBox.style.display = 'block';
         
-        // Kembalikan pointer-events ke auto agar tombol "Main Lagi" bisa langsung ditekan
+        // Kembalikan pointer-events ke auto agar tombol "Main Lagi" direspons instan oleh HP
         uiOverlay.style.pointerEvents = 'auto';
         uiOverlay.style.visibility = 'visible';
         uiOverlay.style.opacity = '1';
@@ -494,6 +541,28 @@ function gameOver() {
         startBtn.textContent = 'Main Lagi';
     }
 }
+
+if (exitFullscreenBtn) {
+    exitFullscreenBtn.addEventListener('click', () => {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        }
+    });
+}
+
+function handleFullscreenChange() {
+    if (!exitFullscreenBtn) return;
+    const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+    if (!isFullscreen && !gameRunning) {
+        exitFullscreenBtn.style.display = 'none';
+    } else if (isFullscreen) {
+        exitFullscreenBtn.style.display = 'block';
+    }
+}
+document.addEventListener('fullscreenchange', handleFullscreenChange);
+document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
 
 function animate(currentTime) {
     requestAnimationFrame(animate);
@@ -609,7 +678,7 @@ playerNameInput.addEventListener('keydown', (e) => {
     if (e.code === 'Enter') startGame();
 });
 
-// Perbaikan Toleransi Deteksi Visibility Overlay (Bebas Lag / 1x Ketuk Lancar)
+// Perbaikan Toleransi Deteksi Visibility Overlay Tanpa Syarat Opacity String Ketat
 window.addEventListener('keydown', (e) => {
     if (e.code === 'Space') {
         e.preventDefault();
