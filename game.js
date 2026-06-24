@@ -22,7 +22,6 @@ const adminModal = document.getElementById('admin-modal');
 const adminCloseCross = document.getElementById('admin-close-cross');
 const adminOkBtn = document.getElementById('admin-ok-btn');
 const adminPasswordInput = document.getElementById('admin-password-input');
-const exitFullscreenBtn = document.getElementById('exit-fullscreen-btn');
 
 // Optimasi Retina Display / HDPI Anti-Blur
 const dpr = window.devicePixelRatio || 1;
@@ -52,6 +51,10 @@ const jumpStrength = -5.3;
 const pipeSpeed = 2.4;
 const pipeSpawnRate = 95; 
 const pipeGap = 145;
+
+// Pembatas Frame Rate (Mengunci 60 FPS di PC Layar 144Hz/240Hz)
+let lastTime = 0;
+const fpsInterval = 1000 / 60; 
 
 // =========================================================
 // ⚠️ KONFIGURASI DATABASE FIREBASE ONLINE
@@ -451,14 +454,7 @@ function startGame() {
         playerNameInput.value = current_player_name; 
     }
 
-    const isAndroid = /Android/i.test(navigator.userAgent);
-    if (isAndroid) {
-        const gameArea = document.getElementById('main-game-area');
-        if (gameArea && gameArea.requestFullscreen) {
-            gameArea.requestFullscreen().catch(err => console.log("Fullscreen ditolak:", err.message));
-        }
-    }
-    
+    // 🌟 FULL SCREEN DIBUANG TOTAL AGAR TIDAK MASUK LAGI SAAT MAIN KEMBALI DI HP
     canvas.focus(); 
     bird.y = 220;
     bird.velocity = 0;
@@ -471,9 +467,13 @@ function startGame() {
     scoreDisplay.textContent = score;
     scoreDisplay.classList.remove('score-pop'); 
     nameBox.style.display = 'none';
+    
+    // Sembunyikan overlay visual & matikan interaksinya secara instan
     uiOverlay.style.opacity = '0';
-    setTimeout(() => { uiOverlay.style.visibility = 'hidden'; }, 300);
-    setTimeout(() => { gameRunning = true; }, 12);
+    uiOverlay.style.pointerEvents = 'none';
+    uiOverlay.style.visibility = 'hidden';
+    
+    setTimeout(() => { gameRunning = true; }, 40);
 }
 
 function gameOver() {
@@ -484,35 +484,25 @@ function gameOver() {
             particles.push(new Particle(bird.x, bird.y, '#ef4444'));
         }
         nameBox.style.display = 'block';
+        
+        // Kembalikan pointer-events ke auto agar tombol "Main Lagi" bisa langsung ditekan
+        uiOverlay.style.pointerEvents = 'auto';
         uiOverlay.style.visibility = 'visible';
         uiOverlay.style.opacity = '1';
+        
         overlayTitle.innerHTML = `GAME OVER<br><span style="font-size: 15px; color: #475569; font-weight:700;">${current_player_name}: ${score} pts</span>`;
         startBtn.textContent = 'Main Lagi';
     }
 }
 
-if (exitFullscreenBtn) {
-    exitFullscreenBtn.addEventListener('click', () => {
-        if (document.exitFullscreen) {
-            document.exitFullscreen();
-        } else if (document.webkitExitFullscreen) {
-            document.webkitExitFullscreen();
-        }
-    });
-}
+function animate(currentTime) {
+    requestAnimationFrame(animate);
 
-function handleFullscreenChange() {
-    const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
-    if (!isFullscreen && !gameRunning) {
-        if (exitFullscreenBtn) exitFullscreenBtn.style.display = 'none';
-    } else if (isFullscreen) {
-        if (exitFullscreenBtn) exitFullscreenBtn.style.display = 'block';
-    }
-}
-document.addEventListener('fullscreenchange', handleFullscreenChange);
-document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    // Kunci Framerate 60 FPS Biar Di PC Monitor Gaming Tidak Berjalan Super Cepat
+    const elapsed = currentTime - lastTime;
+    if (elapsed < fpsInterval) return;
+    lastTime = currentTime - (elapsed % fpsInterval);
 
-function animate() {
     ctx.clearRect(0, 0, logicalWidth, logicalHeight);
     
     let skyGrad = ctx.createLinearGradient(0, 0, 0, logicalHeight);
@@ -569,8 +559,6 @@ function animate() {
     ctx.moveTo(0, logicalHeight - 45);
     ctx.lineTo(logicalWidth, logicalHeight - 45);
     ctx.stroke();
-
-    requestAnimationFrame(animate);
 }
 
 charUpload.addEventListener('change', (e) => {
@@ -621,11 +609,12 @@ playerNameInput.addEventListener('keydown', (e) => {
     if (e.code === 'Enter') startGame();
 });
 
+// Perbaikan Toleransi Deteksi Visibility Overlay (Bebas Lag / 1x Ketuk Lancar)
 window.addEventListener('keydown', (e) => {
     if (e.code === 'Space') {
         e.preventDefault();
         if (gameRunning) bird.jump();
-        else if (uiOverlay.style.visibility !== 'hidden' && uiOverlay.style.opacity === '1') startGame();
+        else if (uiOverlay.style.visibility !== 'hidden') startGame();
     }
 });
 
@@ -640,7 +629,14 @@ canvas.addEventListener('touchstart', (e) => {
     }
 }, { passive: false });
 
-startBtn.addEventListener('click', (e) => { e.stopPropagation(); startGame(); });
+// Pemicu Sentuhan Instan 1 Kali Sentuh Langsung Main Tanpa Penundaan Browser HP
+function handleStartTrigger(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    startGame();
+}
+startBtn.addEventListener('touchstart', handleStartTrigger, { passive: false });
+startBtn.addEventListener('click', handleStartTrigger);
 
 clearScoresBtn.addEventListener('click', () => {
     adminPasswordInput.value = ''; 
@@ -676,6 +672,8 @@ adminPasswordInput.addEventListener('keydown', (e) => {
 document.addEventListener('DOMContentLoaded', () => {
     preloadLeaderboardSystem();
     autoDetectCity(); 
+    uiOverlay.style.pointerEvents = 'auto'; 
+    if (playerNameInput) playerNameInput.focus();
 });
 
 animate();
