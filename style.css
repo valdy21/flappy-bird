@@ -199,133 +199,104 @@ canvas {
     box-shadow: 0 15px 25px -10px rgba(2, 132, 199, 0.6);
 }
 
-/* =========================================================
-   🌟 VISUAL SKOR BARU: LEBIH FUN, TEBAL, DAN INTERAKTIF
-   ========================================================= */
 #score-display {
     position: absolute;
     top: 25px;
-    font-size: 4.2rem; /* Ukuran sedikit diperbesar agar lebih mencolok */
+    font-size: 4.2rem;
     font-weight: 950;
-    color: #ffffff; /* Mengubah warna teks menjadi putih murni */
+    color: #ffffff;
     pointer-events: none;
     width: 100%;
     text-align: center;
     z-index: 2;
-    
-    /* Efek Stroke Hitam Tebal ala Game Arcade + Bayangan Lembut di Belakang */
     text-shadow: 
-        -3px -3px 0 #3bd8ff,  
-         3px -3px 0 #3bd8ff,
-        -3px  3px 0 #3bd8ff,
-         3px  3px 0 #3bd8ff,
+        -3px -3px 0 #000000,  
+         3px -3px 0 #000000,
+        -3px  3px 0 #000000,
+         3px  3px 0 #000000,
          0px  6px 12px rgba(0, 0, 0, 0.25);
-         
-    transition: transform 0.08s ease-out; /* Memicu transisi balik yang halus */
+    transition: transform 0.08s ease-out;
 }
 
-/* Animasi Ketukan Membal Saat Skor Bertambah */
 .score-pop {
     animation: scoreBounce 0.18s ease-out;
 }
 
 @keyframes scoreBounce {
-    0% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.3) rotate(-3deg); /* Membesar + Sedikit miring agar fun */
-        color: #fde047; /* Berubah warna kuning cerah sesaat saat pop */
-    }
-    100% {
-        transform: scale(1) rotate(0deg);
-        color: #ffffff;
-    }
-}
-
-.instructions {
-    margin-top: 15px;
-    font-size: 12px;
-    color: #64748b;
-    font-weight: 600;
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3) rotate(-3deg); color: #fde047; }
+    100% { transform: scale(1) rotate(0deg); color: #ffffff; }
 }
 
 .leaderboard-container {
     background: #ffffff;
-    padding: 24px;
     border-radius: 24px;
+    padding: 25px;
+    width: 320px;
     box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.05);
-    width: 290px;
-    display: flex;
-    flex-direction: column;
+    border: 4px solid #ffffff;
 }
 
 .leaderboard-container h2 {
-    font-size: 1rem;
+    font-size: 16px;
     font-weight: 800;
-    color: #334155;
-    margin-bottom: 14px;
+    color: #1e293b;
+    margin-bottom: 20px;
     text-align: center;
-    border-bottom: 2px solid #f1f5f9;
-    padding-bottom: 10px;
+    letter-spacing: 0.5px;
+}
+
+#leaderboard-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
 }
 
 #leaderboard-list li {
-    font-size: 13px;
-    font-weight: 700;
-    color: #475569;
-    padding: 8px 12px;
-    border-radius: 8px;
-    margin-bottom: 6px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    padding: 10px 14px;
     background: #f8fafc;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #475569;
+    border: 1px solid #f1f5f9;
 }
-
-#leaderboard-list li span:first-child {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 170px;
-}
-
-#leaderboard-list li:nth-child(1) { background: #fef3c7; color: #92400e; }
-#leaderboard-list li:nth-child(2) { background: #f1f5f9; color: #334155; }
-#leaderboard-list li:nth-child(3) { background: #ffedd5; color: #9a3412; }
 
 #clear-scores-btn {
-    margin-top: 12px;
+    width: 100%;
+    padding: 10px;
     background: none;
-    border: none;
+    border: 2px dashed #cbd5e1;
     color: #94a3b8;
-    font-size: 11px;
-    font-weight: 700;
+    border-radius: 12px;
     cursor: pointer;
-    text-align: center;
-    transition: color 0.2s;
+    font-size: 12px;
+    font-weight: 700;
+    transition: all 0.2s;
 }
 
-#clear-scores-btn:hover {
-    color: #ef4444;
-}
-
-/* Custom Modal */
 .modal-overlay {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(15, 23, 42, 0.3);
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.6);
     backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 100;
+    z-index: 50;
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.3s, visibility 0.3s;
+    transition: opacity 0.25s, visibility 0.25s;
+    border-radius: 18px;
 }
 
 .modal-overlay.active {
@@ -337,137 +308,146 @@ canvas {
     background: #ffffff;
     padding: 24px;
     border-radius: 20px;
-    max-width: 400px;
     width: 90%;
+    max-width: 340px;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
     text-align: center;
-    position: relative;
+}
+
+.modal-content h3 {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #1e293b;
+    margin-bottom: 16px;
 }
 
 .crop-area {
-    max-height: 260px;
+    width: 100%;
+    height: 200px;
     background: #f8fafc;
     border-radius: 12px;
     overflow: hidden;
-    margin-bottom: 16px;
+    margin-bottom: 18px;
+}
+
+.crop-area img {
+    max-width: 100%;
+    max-height: 100%;
 }
 
 .modal-actions {
     display: flex;
     gap: 10px;
-    justify-content: flex-end;
+    justify-content: center;
+}
+
+.modal-actions button {
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 700;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.2s;
 }
 
 .btn-primary {
     background: #0284c7;
     color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 10px;
-    font-weight: 700;
-    cursor: pointer;
-    font-size: 13.5px;
 }
+.btn-primary:hover { background: #0369a1; }
 
 .btn-secondary {
-    background: #f1f5f9;
+    background: #e2e8f0;
     color: #475569;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 10px;
-    font-weight: 700;
-    cursor: pointer;
-    font-size: 13.5px;
 }
+.btn-secondary:hover { background: #cbd5e1; }
 
+/* ADMIN SYSTEM STYLING */
 .admin-modal-box {
-    max-width: 360px;
-    padding: 32px 24px 24px 24px;
-    border: 1px solid #f1f5f9;
+    position: relative;
+    padding-top: 35px;
+    border: 3px solid #f1f5f9;
 }
 
 .close-cross-btn {
     position: absolute;
-    top: 14px;
-    right: 18px;
+    top: 10px;
+    right: 14px;
     background: none;
-    border: none;
+    border: none !important;
     font-size: 24px;
+    font-weight: 400;
     color: #94a3b8;
     cursor: pointer;
+    padding: 0 !important;
     line-height: 1;
-    transition: color 0.2s;
 }
-
 .close-cross-btn:hover {
     color: #64748b;
 }
 
-.admin-modal-body h3 {
-    font-size: 1.2rem;
-    font-weight: 800;
-    color: #1e293b;
-    margin-bottom: 8px;
-}
-
-.admin-modal-body p {
-    font-size: 13.5px;
-    color: #64748b;
-    line-height: 1.5;
-    margin-bottom: 20px;
+.admin-modal-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
 }
 
 .admin-icon-lock {
-    display: inline-block;
-    font-size: 32px;
-    margin-bottom: 12px;
+    font-size: 36px;
+    margin-bottom: 4px;
+}
+
+.admin-modal-body p {
+    font-size: 12px;
+    color: #64748b;
+    line-height: 1.5;
+    margin-bottom: 6px;
 }
 
 #admin-password-input {
     width: 100%;
     padding: 10px 14px;
-    font-size: 13px;
     border: 2px solid #e2e8f0;
     border-radius: 10px;
-    outline: none;
+    font-size: 13px;
     text-align: center;
+    outline: none;
+    font-weight: 600;
     color: #334155;
-    transition: border-color 0.2s;
+    background: #f8fafc;
+    transition: all 0.2s;
 }
-
 #admin-password-input:focus {
-    border-color: #0284c7;
+    border-color: #64748b;
+    background: #fff;
 }
 
 .admin-actions {
-    justify-content: center;
-    width: 100%;
+    justify-content: stretch;
 }
-
 .admin-actions button {
     width: 100%;
-    padding: 12px;
-    border-radius: 12px;
+    padding: 11px;
 }
 
-/* TOMBOL KELUAR FULLSCREEN ANDROID */
+/* FULLSCREEN HARDWARE-ACCELERATED FIX */
 #exit-fullscreen-btn {
-    margin-top: 15px;
-    padding: 12px 24px;
+    padding: 10px 20px;
     background: #ef4444;
-    color: white;
+    color: #fff;
     border: none;
-    border-radius: 12px;
+    border-radius: 10px;
     font-weight: 700;
-    font-size: 14px;
+    font-size: 12px;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
     transition: all 0.2s;
-    z-index: 999;
 }
-
 #exit-fullscreen-btn:hover {
-    background: #dc2626;
+    background: #white;
     transform: translateY(-2px);
 }
 
@@ -509,28 +489,11 @@ canvas {
 @media (max-width: 740px) {
     body {
         overflow-y: auto !important; /* Membuka kunci scroll mobile HP */
-        padding: 15px 10px;
-        min-height: auto;
-        display: block;
+        padding: 15px 0;
     }
-
     .main-layout {
         flex-direction: column;
         align-items: center;
         gap: 20px;
-        padding: 0;
-        overflow-y: visible;
-    }
-
-    .game-container {
-        width: 360px;
-        height: 495px;
-    }
-
-    .leaderboard-container {
-        width: 360px;
-        max-width: 100%;
-        margin-top: 10px;
-        margin-bottom: 40px; 
     }
 }
